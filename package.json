@@ -1,17 +1,14 @@
 {
-  "name": "nestjs-service-template",
+  "name": "Proyecto Backend sensores Puce Sede Manta",
   "version": "1.0.0",
-  "description": "Template for new nestjs services",
-  "author": "alberthernandezdev@gmail.com",
-  "license": "MIT",
+  "description": "Reportes Generales del Campus Puce Sede Manta",
+  "author": " ",
+  "license": " ",
   "type": "module",
-  "bugs": {
-    "url": "https://github.com/AlbertHernandez/nestjs-service-template/issues"
-  },
-  "homepage": "https://github.com/AlbertHernandez/nestjs-service-template#readme",
+
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AlbertHernandez/nestjs-service-template.git"
+    "url": "https://github.com/Andioh15/Backend-Practicas.git"
   },
   "keywords": [
     "typescript",
