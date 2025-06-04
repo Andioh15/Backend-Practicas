@@ -5,9 +5,9 @@ services:
       target: production
       context: .
       args:
-        - PORT=${PORT:-3000}
+        - PORT=${PORT:-8080}
     ports:
-      - "${PORT:-3000}:${PORT:-3000}"
+      - "${PORT:-8080}:${PORT:-8080}"
     deploy:
       resources:
         limits:
@@ -25,9 +25,9 @@ services:
       target: dev
       context: .
       args:
-        - PORT=${PORT:-3000}
+        - PORT=${PORT:-8080}
     ports:
-      - "${PORT:-3000}:${PORT:-3000}"
+      - "${PORT:-8080}:${PORT:-8080}"
       - "9229:9229"
     volumes:
       - ./src:/app/src
@@ -49,7 +49,7 @@ services:
     ports:
       - "5665:5665"
     environment:
-      BASE_URL: "http://host.docker.internal:3000"
+      BASE_URL: "http://host.docker.internal:8080"
       K6_WEB_DASHBOARD_EXPORT: "report.html"
       K6_WEB_DASHBOARD_PERIOD: "1s"
       K6_WEB_DASHBOARD_OPEN: "true"
