@@ -1,17 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { Sensor } from './sensor.entity';
+import { Sensors } from './sensors.entity';
 
-@Entity('reading')
-export class Reading {
+@Entity('readings')
+export class Readings {
   @PrimaryGeneratedColumn()
   reading_id: number;
 
   @Column()
   sensor_id: number;
 
-  @ManyToOne(() => Sensor)
+  @ManyToOne(() => Sensors)
   @JoinColumn({ name: 'sensor_id' })
-  sensor: Sensor;
+  sensor: Sensors;
 
   @Column({ type: 'float' })
   value: number;

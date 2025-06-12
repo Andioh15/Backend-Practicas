@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { CampusService } from './campus.service';
-import { Campus } from '../entities/campus.entity';
+import { Campus } from '../entities/campuses.entity';
 
 @Controller('campus')
 export class CampusController {

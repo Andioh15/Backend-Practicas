@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Campus } from '../entities/campus.entity';
+import { Campus } from '../entities/campuses.entity';
 import { CampusService } from './campus.service';
 import { CampusController } from './campus.controller';
 

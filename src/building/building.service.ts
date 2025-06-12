@@ -1,20 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Building } from '../entities/building.entity';
+import { Buildings } from '../entities/buildings.entity';
 
 @Injectable()
 export class BuildingService {
   constructor(
-    @InjectRepository(Building)
-    private buildingRepository: Repository<Building>,
+    @InjectRepository(Buildings)
+    private buildingRepository: Repository<Buildings>,
   ) {}
 
-  findAll(): Promise<Building[]> {
+  findAll(): Promise<Buildings[]> {
     return this.buildingRepository.find();
   }
 
-  create(building: Building): Promise<Building> {
+  create(building: Buildings): Promise<Buildings> {
     return this.buildingRepository.save(building);
   }
 }

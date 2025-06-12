@@ -1,17 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { Room } from './room.entity';
+import { Rooms } from './rooms.entity';
 
-@Entity('sensor')
-export class Sensor {
+@Entity('Sensors')
+export class Sensors {
   @PrimaryGeneratedColumn()
   sensor_id: number;
 
   @Column()
   room_id: number;
 
-  @ManyToOne(() => Room)
+  @ManyToOne(() => Rooms)
   @JoinColumn({ name: 'room_id' })
-  room: Room;
+  room: Rooms;
 
   @Column({ type: 'varchar', length: 100 })
   sensor_type: string;

@@ -1,20 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Reading } from '../entities/reading.entity';
+import { Readings } from '../entities/readings.entity';
 
 @Injectable()
 export class ReadingService {
   constructor(
-    @InjectRepository(Reading)
-    private readingRepository: Repository<Reading>,
+    @InjectRepository(Readings)
+    private readingRepository: Repository<Readings>,
   ) {}
 
-  findAll(): Promise<Reading[]> {
+  findAll(): Promise<Readings[]> {
     return this.readingRepository.find();
   }
 
-  create(reading: Reading): Promise<Reading> {
+  create(reading: Readings): Promise<Readings> {
     return this.readingRepository.save(reading);
   }
 }

@@ -1,17 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { Block } from './block.entity';
+import { Blocks } from './blocks.entity';
 
-@Entity('building')
-export class Building {
+@Entity('buildings')
+export class Buildings {
   @PrimaryGeneratedColumn()
   building_id: number;
 
   @Column()
   block_id: number;
 
-  @ManyToOne(() => Block)
+  @ManyToOne(() => Blocks)
   @JoinColumn({ name: 'block_id' })
-  block: Block;
+  block: Blocks;
 
   @Column({ type: 'varchar', length: 100 })
   building_name: string;

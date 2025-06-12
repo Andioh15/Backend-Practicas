@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { Campus } from './campus.entity';
+import { Campus } from './campuses.entity';
 
-@Entity('block')
-export class Block {
+@Entity('blocks')
+export class Blocks {
   @PrimaryGeneratedColumn()
   block_id: number;
 
