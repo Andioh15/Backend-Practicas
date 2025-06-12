@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { ReadingService } from './reading.service';
-import { Readings} from '../entities/readings.entity';
+import { Readings } from '../entities/readings.entity';
 
 @Controller('reading')
 export class ReadingController {
@@ -15,4 +15,12 @@ export class ReadingController {
   create(@Body() reading: Readings): Promise<Readings> {
     return this.readingService.create(reading);
   }
+
+  @Get('summary-db')
+  getAverageSummaryFromDB() {
+    return this.readingService.getAverageSummaryFromDB();
+  }
 }
+
+
+
