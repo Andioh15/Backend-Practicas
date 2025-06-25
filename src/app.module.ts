@@ -11,6 +11,8 @@ import { BuildingModule } from './building/building.module';
 import { RoomModule } from './room/room.module';
 import { SensorModule } from './sensor/sensor.module';
 import { ReadingModule } from './reading/reading.module';
+import { ReportsModule } from './reports/reports.module';
+import { report } from 'process';
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ import { ReadingModule } from './reading/reading.module';
     RoomModule,
     SensorModule,
     ReadingModule,
+    ReportsModule
   ],
   controllers: [AppController],
   providers: [AppService],

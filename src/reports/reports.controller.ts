@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Query } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { WeeklyReportDto } from './dtos/weekly-report.dto';
 import { MonthlyReportDto } from './dtos/monthly-report.dto';
@@ -9,7 +9,7 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('weekly')
-  async getWeeklyReport(@Query() queryParams: WeeklyReportDto) {
+  async getWeeklyReport(@Body() queryParams: WeeklyReportDto) {
     return this.reportsService.getWeeklyReport(queryParams);
   }
 

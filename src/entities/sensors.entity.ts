@@ -13,10 +13,10 @@ export class Sensors {
   @JoinColumn({ name: 'room_id' })
   room: Rooms;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 50 })
   sensor_type: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 20 })
   sensor_measurement_unit: string;
 
   @Column({ type: 'date' })
@@ -25,6 +25,6 @@ export class Sensors {
   @Column({ type: 'varchar', length: 100 })
   sensor_manufacturer: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 50 })
   sensor_serial_number: string;
 }
