@@ -14,12 +14,12 @@ export class ReportsController {
   }
 
   @Get('monthly')
-  async getMonthlyReport(@Query() queryParams: MonthlyReportDto) {
+  async getMonthlyReport(@Body() queryParams: MonthlyReportDto) {
     return this.reportsService.getMonthlyReport(queryParams);
   }
 
   @Get('yearly')
-  async getYearlyReport(@Query() queryParams: YearlyReportDto) {
+  async getYearlyReport(@Body() queryParams: YearlyReportDto) {
     return this.reportsService.getYearlyReport(queryParams);
   }
 }
