@@ -13,8 +13,9 @@ export class Sensors {
   @JoinColumn({ name: 'room_id' })
   room: Rooms;
 
-  @Column({ type: 'varchar', length: 50 })
-  sensor_type: string;
+  @Column({ type: 'varchar', length: 50, default: 'Unknown' })
+sensor_type: string;
+
 
   @Column({ type: 'varchar', length: 20 })
   sensor_measurement_unit: string;
