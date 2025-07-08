@@ -24,7 +24,7 @@ import { report } from 'process';
       password: process.env.PASSWORD,
       database: process.env.DATABASE,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: false, // Set to false in production
+      synchronize: true, // Set to false in production
       retryAttempts: 3,
       retryDelay: 3000,
     }),
