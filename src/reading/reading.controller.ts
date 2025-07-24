@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { ReadingService } from './reading.service';
 import { Readings } from '../entities/readings.entity';
+import { CreateReadingDto } from '../reports/dtos/create-reading.dto';
 
 @Controller('reading')
 export class ReadingController {
@@ -11,9 +12,10 @@ export class ReadingController {
     return this.readingService.findAll();
   }
 
+  
   @Post()
-  create(@Body() reading: Readings): Promise<Readings> {
-    return this.readingService.create(reading);
+  create(@Body() dto: CreateReadingDto): Promise<Readings> {
+    return this.readingService.create(dto);
   }
 
   @Get('summary-db')
