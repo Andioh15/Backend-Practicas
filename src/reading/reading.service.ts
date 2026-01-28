@@ -14,26 +14,31 @@ export class ReadingService {
     @InjectRepository(Sensors)
     private sensorRepository: Repository<Sensors>,
 
-    private dataSource: DataSource,  // Para consultas nativas
+    private dataSource: DataSource,
   ) {}
 
   findAll(): Promise<Readings[]> {
     return this.readingRepository.find();
   }
 
-  
-  async create(dto: CreateReadingDto): Promise<Readings> {
+  // Este método sirve tanto para el POST del Controller como para MQTT
+  async create(dto: CreateReadingDto | any): Promise<Readings> {
+    
+    // Creamos la entidad mapeando los campos a tu tabla 'readings'
     const newReading = this.readingRepository.create({
-      sensor_id: dto.sensor_id,
-      value: dto.value,
+      sensor_id: dto.sensor_id, // Coincide con la FK de tu tabla
+      value: dto.value,         // Coincide con NUMERIC(10,2)
+      
+      // Si no viene fecha (caso MQTT), usamos la actual.
+      // Tu DB tiene DEFAULT CURRENT_TIMESTAMP, pero TypeORM suele preferir enviar el dato.
       reading_timestamp: dto.reading_timestamp ? new Date(dto.reading_timestamp) : new Date(),
     });
 
-    return this.readingRepository.save(newReading);
+    return await this.readingRepository.save(newReading);
   }
 
   async getAverageSummaryFromDB(): Promise<any> {
     const rawResult = await this.readingRepository.query('SELECT * FROM get_average_summary();');
-    return rawResult[0];  // El resultado es un array, extraemos el primer elemento (JSON)
+    return rawResult[0];
   }
 }

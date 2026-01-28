@@ -23,10 +23,15 @@ import { report } from 'process';
       username: process.env.USER,
       password: process.env.PASSWORD,
       database: process.env.DATABASE,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true, // Set to false in production
       retryAttempts: 3,
       retryDelay: 3000,
+      ssl: {
+    rejectUnauthorized: false, // Esto permite certificados autofirmados (común en desarrollo)
+  },
+  // O en algunas versiones antiguas simplemente:
+  // ssl: true, 
+    entities: [__dirname + '/**/*.entity{.ts,.js}'],
+    synchronize: true,
     }),
     UsersModule,
     CampusModule,
@@ -41,4 +46,5 @@ import { report } from 'process';
   providers: [AppService],
 })
 export class AppModule {}
+
 
