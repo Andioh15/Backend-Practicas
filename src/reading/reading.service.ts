@@ -34,7 +34,6 @@ export class ReadingService {
   // 2. DASHBOARD: TARJETAS SUPERIORES (Snapshot actual)
   // ==========================================================
   async getAverageSummaryFromDB(): Promise<any> {
-    // Alimenta: Temperatura promedio, CO2 actual, Ahorro energético, etc.
     const rawResult = await this.readingRepository.query('SELECT * FROM get_average_summary();');
     return rawResult[0];
   }
@@ -43,7 +42,6 @@ export class ReadingService {
   // 3. DASHBOARD: GRÁFICO PRINCIPAL (Promedios Globales)
   // ==========================================================
   async getDashboardDailyMetrics(days: number = 7) {
-    // Retorna: Fecha | Temp Promedio | Hum Promedio | CO2 Promedio (De todo el campus)
     return this.readingRepository.query(
       'SELECT * FROM get_dashboard_daily_metrics($1)',
       [days]
@@ -54,6 +52,11 @@ export class ReadingService {
   // 4. PESTAÑAS DE ANÁLISIS (Semanal / Mensual / Anual)
   // ==========================================================
   async getCampusAnalysis(mode: string) {
+    // CORRECCIÓN DE SEGURIDAD: Validar antes de usar .toLowerCase()
+    if (!mode) {
+      throw new Error('El parámetro "mode" es obligatorio. Ejemplo: ?mode=semanal');
+    }
+
     const validModes = ['semanal', 'mensual', 'anual'];
     const selectedMode = mode.toLowerCase();
 
@@ -61,7 +64,6 @@ export class ReadingService {
       throw new Error('Modo inválido. Use: semanal, mensual, anual');
     }
 
-    // Retorna: Etiqueta (Lunes/Enero/2024) | Temp | Hum | CO2
     return this.readingRepository.query(
       'SELECT * FROM get_campus_analysis($1)',
       [selectedMode]
@@ -69,7 +71,7 @@ export class ReadingService {
   }
 
   // ==========================================================
-  // 5. TABLA DETALLADA (Paginación y Filtros)
+  // 5. TABLA GENERAL (Dashboard Principal)
   // ==========================================================
   async findAllPaginated(
     blockId?: number, 
@@ -78,10 +80,43 @@ export class ReadingService {
     limit = 25, 
     offset = 0
   ) {
-    // Llama a la función optimizada que filtra por ubicación
     return this.readingRepository.query(
       'SELECT * FROM get_last_readings($1, $2, $3, $4, $5)', 
       [blockId, buildingId, roomId, limit, offset]
     );
+  }
+
+  // ==========================================================
+  // 6. NUEVO: TABLAS FILTRADAS (Temp/CO2/Hum con Paginación)
+  // ==========================================================
+  
+  // Obtiene los registros paginados
+  async getFilteredReadings(
+    type: string,
+    page: number,
+    limit: number,
+    blockId?: number,
+    buildingId?: number,
+    roomId?: number,
+  ) {
+    return this.readingRepository.query(
+      'SELECT * FROM get_filtered_readings($1, $2, $3, $4, $5, $6)',
+      [type, page, limit, blockId, buildingId, roomId],
+    );
+  }
+
+  // Obtiene el total de registros (Para calcular número de páginas)
+  async getFilteredReadingsCount(
+    type: string,
+    blockId?: number,
+    buildingId?: number,
+    roomId?: number,
+  ) {
+    // Si creaste la función get_filtered_readings_count en SQL:
+    const result = await this.readingRepository.query(
+      'SELECT get_filtered_readings_count($1, $2, $3, $4) as total',
+      [type, blockId, buildingId, roomId]
+    );
+    return result[0];
   }
 }
