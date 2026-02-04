@@ -26,9 +26,12 @@ async function bootstrap() {
   // 3. Iniciar Microservicios y la API REST
   // startAllMicroservices es esencial para que NestJS empiece a escuchar los tópicos de MQTT
   await app.startAllMicroservices();
-  
-  // Escuchamos en el puerto 8080 y en todas las interfaces de red (0.0.0.0)
-  await app.listen(8080, '0.0.0.0');
+  // Habilitar CORS para que el frontend pueda hacer peticiones desde el navegador
+  app.enableCors();
+
+  // Escuchamos en el puerto 8080 en la dirección '::' para aceptar conexiones IPv6 y IPv4
+  // (evita errores de ECONNREFUSED cuando el cliente resuelve localhost a ::1)
+  await app.listen(8080, '::');
 
   console.log(`---`);
   console.log(`🚀 API REST corriendo en: http://localhost:8080`);
