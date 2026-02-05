@@ -44,6 +44,25 @@ export class ReadingController {
   }
 
   // ==========================================
+  // ☀️ ZONA SOLAR (NUEVOS ENDPOINTS)
+  // ==========================================
+
+  // 1. FORZAR SINCRONIZACIÓN (Botón de pánico para pruebas)
+  // Llama a esto desde el navegador para descargar datos de VCOM a tu BD ahora mismo
+  @Get('solar/sync-test')
+  async forceSolarSync() {
+    await this.readingService.syncSolarData();
+    return { message: 'Sincronización manual ejecutada. Revisa la consola del servidor para ver los logs verdes.' };
+  }
+
+  // 2. DATOS PARA EL FRONTEND (Gráfico + KPIs)
+  // Lee de tu Base de Datos local (rápido y seguro)
+  @Get('solar/detail')
+  getSolarDetail() {
+    return this.readingService.getSolarDetailLocal();
+  }
+
+  // ==========================================
   // 🌐 HTTP - ENDPOINTS DEL DASHBOARD
   // ==========================================
 
@@ -78,8 +97,7 @@ export class ReadingController {
     return this.readingService.findAllPaginated(blockId, buildingId, roomId, limit, offset);
   }
 
-  // NUEVO: Tabla Filtrada (Para páginas de Temp, CO2, Humedad)
-  // Uso: /reading/filter?type=Temperature&page=1&limit=10&blockId=1
+  // Tabla Filtrada (Para páginas de Temp, CO2, Humedad)
   @Get('filter')
   async getFiltered(
     @Query('type') type: string,
@@ -95,8 +113,7 @@ export class ReadingController {
     return this.readingService.getFilteredReadings(type, page, limit, blockId, buildingId, roomId);
   }
 
-  // NUEVO: Conteo Total (Para la paginación de Temp, CO2, Humedad)
-  // Uso: /reading/filter/count?type=Temperature&blockId=1
+  // Conteo Total (Para la paginación de Temp, CO2, Humedad)
   @Get('filter/count')
   async getFilteredCount(
     @Query('type') type: string,
