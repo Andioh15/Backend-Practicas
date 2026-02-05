@@ -134,4 +134,10 @@ export class ReadingController {
   create(@Body() dto: CreateReadingDto): Promise<Readings> {
     return this.readingService.create(dto);
   }
+
+  // 3. TARJETAS DE RESUMEN (Energía/Dinero Hoy y Mes)
+  @Get('solar/cards')
+  getSolarCards() {
+    return this.readingService.getSolarCardsSummary();
+  }
 }
