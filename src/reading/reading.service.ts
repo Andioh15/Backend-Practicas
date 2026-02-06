@@ -4,7 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, timeout } from 'rxjs'; // <--- Importamos timeout para evitar cuelgues
 import { Readings } from '../entities/readings.entity';
 import { Sensors } from '../entities/sensors.entity';
 import { CreateReadingDto } from '../reports/dtos/create-reading.dto';
@@ -13,7 +13,7 @@ import { CreateReadingDto } from '../reports/dtos/create-reading.dto';
 export class ReadingService {
   private readonly logger = new Logger(ReadingService.name);
 
-  // ⚠️ IDs de tus sensores en la Base de Datos (Según tu captura son 4, 5, 6, 7, 8)
+  // IDs de los sensores en TU base de datos (Inversores 1 al 5)
   private readonly INVERTER_DB_IDS = [4, 5, 6, 7, 8]; 
 
   constructor(
@@ -29,7 +29,7 @@ export class ReadingService {
   ) {}
 
   // ==========================================================
-  // 1. INSERCIÓN DE DATOS (MQTT y HTTP POST)
+  // 1. CREAR LECTURA (MQTT / POST)
   // ==========================================================
   async create(dto: CreateReadingDto | any): Promise<Readings> {
     const newReading = this.readingRepository.create({
@@ -37,12 +37,11 @@ export class ReadingService {
       value: dto.value,
       reading_timestamp: dto.reading_timestamp ? new Date(dto.reading_timestamp) : new Date(),
     });
-
     return await this.readingRepository.save(newReading);
   }
 
   // ==========================================================
-  // 2. DASHBOARD: TARJETAS SUPERIORES
+  // 2. DASHBOARD: TARJETAS
   // ==========================================================
   async getAverageSummaryFromDB(): Promise<any> {
     const rawResult = await this.readingRepository.query('SELECT * FROM get_average_summary();');
@@ -53,94 +52,83 @@ export class ReadingService {
   // 3. DASHBOARD: GRÁFICO PRINCIPAL
   // ==========================================================
   async getDashboardDailyMetrics(days: number = 7) {
-    return this.readingRepository.query(
-      'SELECT * FROM get_dashboard_daily_metrics($1)',
-      [days]
-    );
+    return this.readingRepository.query('SELECT * FROM get_dashboard_daily_metrics($1)', [days]);
   }
 
   // ==========================================================
-  // 4. PESTAÑAS DE ANÁLISIS
+  // 4. ANÁLISIS (Semanal/Mensual/Anual)
   // ==========================================================
   async getCampusAnalysis(mode: string) {
-    if (!mode) throw new Error('El parámetro "mode" es obligatorio.');
-
+    if (!mode) throw new Error('Mode obligatorio');
     const validModes = ['semanal', 'mensual', 'anual'];
-    const selectedMode = mode.toLowerCase();
-
-    if (!validModes.includes(selectedMode)) {
-      throw new Error('Modo inválido. Use: semanal, mensual, anual');
-    }
-
-    return this.readingRepository.query(
-      'SELECT * FROM get_campus_analysis($1)',
-      [selectedMode]
-    );
+    if (!validModes.includes(mode.toLowerCase())) throw new Error('Modo inválido');
+    
+    return this.readingRepository.query('SELECT * FROM get_campus_analysis($1)', [mode.toLowerCase()]);
   }
 
   // ==========================================================
-  // 5. TABLA GENERAL
+  // 5. TABLA PAGINADA
   // ==========================================================
   async findAllPaginated(blockId?: number, buildingId?: number, roomId?: number, limit = 25, offset = 0) {
-    return this.readingRepository.query(
-      'SELECT * FROM get_last_readings($1, $2, $3, $4, $5)', 
-      [blockId, buildingId, roomId, limit, offset]
-    );
+    return this.readingRepository.query('SELECT * FROM get_last_readings($1, $2, $3, $4, $5)', [blockId, buildingId, roomId, limit, offset]);
   }
 
   // ==========================================================
-  // 6. TABLAS FILTRADAS
+  // 6. FILTROS Y CONTEOS
   // ==========================================================
   async getFilteredReadings(type: string, page: number, limit: number, blockId?: number, buildingId?: number, roomId?: number) {
-    return this.readingRepository.query(
-      'SELECT * FROM get_filtered_readings($1, $2, $3, $4, $5, $6)',
-      [type, page, limit, blockId, buildingId, roomId],
-    );
+    return this.readingRepository.query('SELECT * FROM get_filtered_readings($1, $2, $3, $4, $5, $6)', [type, page, limit, blockId, buildingId, roomId]);
   }
 
   async getFilteredReadingsCount(type: string, blockId?: number, buildingId?: number, roomId?: number) {
-    const result = await this.readingRepository.query(
-      'SELECT get_filtered_readings_count($1, $2, $3, $4) as total',
-      [type, blockId, buildingId, roomId]
-    );
+    const result = await this.readingRepository.query('SELECT get_filtered_readings_count($1, $2, $3, $4) as total', [type, blockId, buildingId, roomId]);
     return result[0];
   }
 
   // ========================================================================
-  // 7. SOLAR: CRON JOB (CORREGIDO Y DEFINITIVO)
+  // 7. SOLAR: CRON JOB (MODO DETECTIVE 🕵️‍♂️)
   // ========================================================================
   @Cron(CronExpression.EVERY_HOUR)
   async syncSolarData() {
-    this.logger.log('⏳ Iniciando sincronización de datos solares con VCOM...');
+    this.logger.log('⏳ 1. Iniciando sincronización de datos solares...');
 
-    // 1. Obtener Configuración
-    // Asegúrate de que en .env la URL NO tenga parámetros:
+    // A. Obtener Variables
     const vcomBaseUrl = this.configService.get<string>('VCOM_API_URL');
     const vcomCookie = this.configService.get<string>('VCOM_COOKIE');
 
     if (!vcomBaseUrl || !vcomCookie) {
-        this.logger.error('❌ Faltan variables de entorno VCOM_API_URL o VCOM_COOKIE');
+        this.logger.error('❌ Faltan variables de entorno. Revisa el .env');
         return;
     }
 
-    // 2. Generar Fecha Dinámica (HOY)
-    // Formato requerido: YYYY-MM-DDT00:00:00
+    // B. Generar Fecha (Ajustada a Ecuador GMT-5)
     const now = new Date();
-    const dateStr = now.toISOString().split('T')[0]; 
+    // Restamos 5 horas (en milisegundos) para obtener la fecha de Ecuador
+    const ecuadorTime = new Date(now.getTime() - (5 * 60 * 60 * 1000));
+    const dateStr = ecuadorTime.toISOString().split('T')[0]; 
     const dynamicDate = `${dateStr}T00:00:00`;
 
-    // 3. Definir Inversores (Extraídos de tu Postman)
-    // Ordenamos del .1 al .5 para que coincidan con tus sensores 4,5,6,7,8
-    const inverterIds = [
-        'Id235422.1',
-        'Id235422.2',
-        'Id235422.3',
-        'Id235422.4',
-        'Id235422.5'
-    ].join(',');
+    // Parámetros IDÉNTICOS a tu Postman exitoso
+    const params = {
+        url: '/default/static/graph-with-table',
+        displayType: 'highcharts',
+        theme: 'light',
+        systemId: '2127159',
+        type: 'Wechselrichter',
+        key: 'RPP09',
+        chartType: 'Wechselrichter',
+        width: 'undefined',    
+        height: '324.02325',   
+        date: dynamicDate,
+        displayMinuteValues: 'false',
+        period: 'tag',
+        inv: 'Id235422.1,Id235422.2,Id235422.3,Id235422.4,Id235422.5' // IDs ordenados
+    };
 
     try {
-      // 4. Petición a VCOM con TODOS los parámetros de Postman
+      this.logger.log(`🚀 2. Enviando petición a: ${vcomBaseUrl}`);
+      
+      // C. Petición HTTP con Timeout de 10 segundos
       const response = await lastValueFrom(
         this.httpService.get(vcomBaseUrl, { 
           headers: { 
@@ -148,46 +136,41 @@ export class ReadingService {
             'Content-Type': 'application/json', 
             'X-Requested-With': 'XMLHttpRequest' 
           },
-          // AQUÍ ESTÁ LA CLAVE: Pasamos los mismos parámetros que Postman
-          params: {
-            url: '/default/static/graph-with-table',
-            displayType: 'highcharts',
-            theme: 'light',
-            systemId: '2127159',      // <--- ID DE TU SISTEMA
-            type: 'Wechselrichter',
-            key: 'RPP09',             // <--- LLAVE
-            chartType: 'Wechselrichter',
-            date: dynamicDate,        // <--- FECHA DE HOY
-            displayMinuteValues: 'false',
-            period: 'tag',
-            inv: inverterIds          // <--- LOS 5 INVERSORES
-          }
-        })
+          params: params
+        }).pipe(timeout(10000)) 
       );
       
-      // 5. Casteo seguro para evitar el error 'unknown'
+      this.logger.log(`📩 3. Respuesta recibida! Status: ${response.status}`);
+      
       const rawData = response.data as any;
 
-      // 6. Validar respuesta
+      // 🔍 DEBUG: Imprimir la estructura para ver si cambió
+      // Si esto imprime HTML en vez de JSON, es que la cookie expiró o la URL está mal
+      if (typeof rawData === 'string') {
+         this.logger.warn('⚠️ La respuesta es un STRING (posiblemente HTML de error), no un JSON.');
+         console.log(rawData.substring(0, 200)); 
+         return;
+      }
+
       if (!rawData || !rawData.data) {
-        this.logger.warn('⚠️ VCOM respondió OK pero el array "data" está vacío.');
+        this.logger.warn('⚠️ 4. Alerta: El objeto "data" no existe en la respuesta.');
+        console.log('Estructura recibida:', Object.keys(rawData));
         return;
       }
 
-      // 7. Procesar y Guardar
+      this.logger.log(`📊 4. Procesando datos de ${rawData.data.length} inversores...`);
+
+      // D. Procesar y Guardar
       for (const [index, inverterSeries] of rawData.data.entries()) {
         const dbSensorId = this.INVERTER_DB_IDS[index];
         if (!dbSensorId) continue;
 
-        // Filtramos puntos válidos (que no sean null)
         const dataPoints = inverterSeries.data.filter((p: any) => p[1] !== null);
         
         if (dataPoints.length > 0) {
-          // Tomamos el último valor acumulado reportado
           const ultimoPunto = dataPoints[dataPoints.length - 1]; 
           const valorAcumulado = ultimoPunto[1]; 
 
-          // SQL: Insertar solo si no existe ya un dato para esta hora
           await this.readingRepository.query(`
             INSERT INTO readings (sensor_id, value, reading_timestamp)
             SELECT $1, $2, NOW()
@@ -198,17 +181,24 @@ export class ReadingService {
             );
           `, [dbSensorId, valorAcumulado]);
           
-          this.logger.log(`✅ Inversor ${index + 1} (Sensor ${dbSensorId}) guardado: ${valorAcumulado} kWh`);
+          this.logger.log(`✅ Inversor ${index + 1} (Sensor ${dbSensorId}) -> ${valorAcumulado} kWh`);
+        } else {
+            this.logger.log(`ℹ️ Inversor ${index + 1} sin datos recientes.`);
         }
       }
 
     } catch (error: any) {
-      this.logger.error('❌ Error sincronizando solar:', error.message);
+      this.logger.error('❌ Error CRÍTICO en sincronización:');
+      this.logger.error(error.message);
+      if (error.response) {
+         console.log('🔴 Detalle Error Servidor:', error.response.data);
+         console.log('🔴 Status:', error.response.status);
+      }
     }
   }
 
   // ========================================================================
-  // 8. SOLAR: VISTA FRONTEND (Lee de la BD Local)
+  // 8. VISTA FRONTEND (Lee de la BD Local)
   // ========================================================================
   async getSolarDetailLocal() {
     const PRECIO_KWH = 0.12;
@@ -272,18 +262,74 @@ export class ReadingService {
 
     seriesMap.forEach(val => grandTotalKwh += val.totalToday);
 
-    const summary = {
-      energy_kwh: parseFloat(grandTotalKwh.toFixed(2)),
-      money_usd: parseFloat((grandTotalKwh * PRECIO_KWH).toFixed(2)),
-      co2_kg: parseFloat((grandTotalKwh * FACTOR_CO2).toFixed(2)),
-      trees: Math.floor((grandTotalKwh * FACTOR_CO2) / 10)
+    return {
+      success: true,
+      date: new Date().toLocaleDateString('es-EC', { timeZone: 'America/Guayaquil' }),
+      summary: {
+        energy_kwh: parseFloat(grandTotalKwh.toFixed(2)),
+        money_usd: parseFloat((grandTotalKwh * PRECIO_KWH).toFixed(2)),
+        co2_kg: parseFloat((grandTotalKwh * FACTOR_CO2).toFixed(2)),
+        trees: Math.floor((grandTotalKwh * FACTOR_CO2) / 10)
+      },
+      series: Array.from(seriesMap.values())
     };
+  }
+  
+  // ========================================================================
+  // 9. SOLAR: TARJETAS DE RESUMEN (HOY vs MES) - ¡Desde BD Local! ⚡💰
+  // ========================================================================
+  async getSolarCardsSummary() {
+    const PRECIO_KWH = 0.12; // Tu tarifa
+
+    // 1. Calcular Total de HOY
+    // Sumamos el valor máximo alcanzado por cada inversor en el día actual
+    const queryToday = `
+      SELECT COALESCE(SUM(max_val), 0) as total_kwh
+      FROM (
+          SELECT MAX(value) as max_val
+          FROM readings
+          WHERE sensor_id = ANY($1)
+          AND DATE(reading_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil') = (NOW() AT TIME ZONE 'America/Guayaquil')::DATE
+          GROUP BY sensor_id
+      ) t;
+    `;
+
+    // 2. Calcular Total del MES
+    // 1. Agrupamos por día y por sensor para sacar el máximo diario.
+    // 2. Sumamos todos esos máximos.
+    const queryMonth = `
+      SELECT COALESCE(SUM(daily_max), 0) as total_kwh
+      FROM (
+          SELECT MAX(value) as daily_max
+          FROM readings
+          WHERE sensor_id = ANY($1)
+          AND to_char(reading_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil', 'YYYY-MM') = to_char(NOW() AT TIME ZONE 'America/Guayaquil', 'YYYY-MM')
+          GROUP BY sensor_id, DATE(reading_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil')
+      ) t;
+    `;
+
+    // Ejecutamos las consultas en paralelo
+    const [resToday, resMonth] = await Promise.all([
+      this.readingRepository.query(queryToday, [this.INVERTER_DB_IDS]),
+      this.readingRepository.query(queryMonth, [this.INVERTER_DB_IDS])
+    ]);
+
+    const todayKwh = parseFloat(resToday[0].total_kwh);
+    const monthKwh = parseFloat(resMonth[0].total_kwh);
 
     return {
       success: true,
       date: new Date().toLocaleDateString('es-EC', { timeZone: 'America/Guayaquil' }),
-      summary: summary,
-      series: Array.from(seriesMap.values())
+      cards: {
+        today: {
+          energy_kwh: parseFloat(todayKwh.toFixed(2)),
+          money_saved: parseFloat((todayKwh * PRECIO_KWH).toFixed(2))
+        },
+        month: {
+          energy_kwh: parseFloat(monthKwh.toFixed(2)),
+          money_saved: parseFloat((monthKwh * PRECIO_KWH).toFixed(2))
+        }
+      }
     };
   }
 }
