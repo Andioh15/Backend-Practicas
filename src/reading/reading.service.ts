@@ -15,6 +15,8 @@ export class ReadingService {
   private readonly logger = new Logger(ReadingService.name);
   private readonly INVERTER_DB_IDS = [4];
 
+  private readonly N8N_WEBHOOK_URL = "https://andioh.app.n8n.cloud/webhook-test/459c5db4-1809-438d-9e46-4205bc50bcd8";
+
   constructor(
     @InjectRepository(Readings)
     private readingRepository: Repository<Readings>,
@@ -69,23 +71,69 @@ export class ReadingService {
   }
 
   // ==========================================================
-  // 1. CREAR LECTURA (SENSORES) -> Intervalo de 10 minutos
+  // 1. CREAR LECTURA + 🚨 ALERTA N8N
   // ==========================================================
   async create(dto: CreateReadingDto | any): Promise<Readings> {
     const timestampToSave = this.getRoundedDate(10); 
 
+    // 1. Evitar duplicados
     await this.readingRepository.query(
         `DELETE FROM readings WHERE sensor_id = $1 AND reading_timestamp = $2`,
         [dto.sensor_id, timestampToSave]
     );
 
+    // 2. Guardar
     const newReading = this.readingRepository.create({
       sensor_id: dto.sensor_id,
       value: dto.value,
       reading_timestamp: timestampToSave, 
     });
 
-    return await this.readingRepository.save(newReading);
+    const savedData = await this.readingRepository.save(newReading);
+
+    // 3. 🚨 VERIFICAR ALERTAS (No usamos await para no bloquear)
+    this.checkAlerts(dto.sensor_id, dto.value);
+
+    return savedData;
+  }
+
+  // ==========================================================
+  // 🚨 LÓGICA DE ENVÍO A N8N
+  // ==========================================================
+  private async checkAlerts(sensorId: number, value: number) {
+    let alertMessage = '';
+    let isCritical = false;
+
+    // Reglas basadas en tus sensores
+    // ID 1 = CO2 (ppm)
+    if (sensorId === 1 && value > 1000) {
+        alertMessage = `⚠️ ALTA CONCENTRACIÓN DE CO2: ${value} ppm.`;
+        isCritical = true;
+    }
+    // ID 2 = Temperatura (°C)
+    else if (sensorId === 2 && value > 50) {
+        alertMessage = `🔥 ALERTA TEMPERATURA CRÍTICA: ${value}°C detectados.`;
+        isCritical = true;
+    }
+    // ID 3 = Humedad (%)
+    else if (sensorId === 3 && (value < 10 || value > 90)) {
+        alertMessage = `💧 HUMEDAD ANORMAL: ${value}%.`;
+        isCritical = true;
+    }
+
+    if (isCritical) {
+        this.logger.warn(`🚨 Disparando Webhook N8N: ${alertMessage}`);
+        try {
+            await lastValueFrom(this.httpService.post(this.N8N_WEBHOOK_URL, {
+                sensor_id: sensorId,
+                value: value,
+                message: alertMessage,
+                timestamp: new Date().toISOString()
+            }));
+        } catch (error) {
+            this.logger.error(`❌ Error al contactar n8n: ${error.message}`);
+        }
+    }
   }
 
   // ==========================================================
