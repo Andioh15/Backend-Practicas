@@ -142,11 +142,12 @@ export class ReadingService {
         'SELECT * FROM get_daily_metrics($1, $2, $3, $4, $5)', 
         [dbType, days, blockId, buildingId, roomId]
     );
+    const fixedData = this.fixTimezone(rawData);
 
     return {
       success: true,
       type: dbType,
-      data: rawData.map(row => ({
+      data: fixedData.map(row => ({
         date: row.chart_date,      
         value: parseFloat(row.chart_value), 
         extra: parseFloat(row.chart_extra)  
@@ -160,14 +161,16 @@ export class ReadingService {
   }
 
   async getDashboardDailyMetrics(days: number = 7) {
-    return this.readingRepository.query('SELECT * FROM get_dashboard_daily_metrics($1)', [days]);
+    const data = await this.readingRepository.query('SELECT * FROM get_dashboard_daily_metrics($1)', [days]);
+    return this.fixTimezone(data);
   }
 
   async getCampusAnalysis(mode: string) {
     if (!mode) throw new Error('Mode obligatorio');
     const validModes = ['semanal', 'mensual', 'anual'];
     if (!validModes.includes(mode.toLowerCase())) throw new Error('Modo inválido');
-    return this.readingRepository.query('SELECT * FROM get_campus_analysis($1)', [mode.toLowerCase()]);
+    const data = await this.readingRepository.query('SELECT * FROM get_campus_analysis($1)', [mode.toLowerCase()]);
+    return this.fixTimezone(data);
   }
 
   async getFilteredReadingsCount(type: string, blockId?: number, buildingId?: number, roomId?: number) {
@@ -229,13 +232,14 @@ export class ReadingService {
       FROM hourly_data ORDER BY local_ts ASC;
     `;
     const rawData = await this.readingRepository.query(query, [this.INVERTER_DB_IDS]);
+    const data = this.fixTimezone(rawData);
     
     const seriesMap = new Map();
     this.INVERTER_DB_IDS.forEach(id => {
       seriesMap.set(id, { label: `Planta Solar`, totalToday: 0, data: [] });
     });
 
-    rawData.forEach((row: any) => {
+    data.forEach((row: any) => {
       const sensorData = seriesMap.get(row.sensor_id);
       if (sensorData) {
         let prod = parseFloat(row.production);
@@ -262,7 +266,8 @@ export class ReadingService {
   async getSolarCardsSummary() {
     const PRECIO_KWH = 0.12;
     const queryToday = `SELECT COALESCE(SUM(max_val), 0) as total_kwh FROM (SELECT MAX(value) as max_val FROM readings WHERE sensor_id = ANY($1) AND DATE(reading_timestamp) = (NOW() AT TIME ZONE 'America/Guayaquil')::DATE GROUP BY sensor_id) t;`;
-    const resToday = await this.readingRepository.query(queryToday, [this.INVERTER_DB_IDS]);
+    const rawToday = await this.readingRepository.query(queryToday, [this.INVERTER_DB_IDS]);
+    const resToday = this.fixTimezone(rawToday);
     const todayKwh = parseFloat(resToday[0].total_kwh);
 
     return {
