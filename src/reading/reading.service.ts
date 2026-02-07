@@ -187,17 +187,26 @@ export class ReadingService {
 
     if (!systemId || !apiKey) { this.logger.error('❌ Faltan credenciales VCOM'); return; }
 
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
-    const ecuadorTime = this.getEcuadorDate();
+    // 1. Obtener fecha y hora actuales de Ecuador
+    // Usamos tu método helper para tener la fecha visual correcta
+    const nowEcuador = this.getEcuadorDate();
+    
+    // dateStr para la API (YYYY-MM-DD)
+    const dateStr = nowEcuador.toISOString().split('T')[0]; 
+    
+    // hourStr para la Base de Datos (YYYY-MM-DD HH) - Para borrar solo la hora actual
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const currentHourStr = `${nowEcuador.getFullYear()}-${pad(nowEcuador.getMonth() + 1)}-${pad(nowEcuador.getDate())} ${pad(nowEcuador.getHours())}`;
 
     const url = `http://ws.meteocontrol.de/api/sites/${systemId}/data/energygeneration`;
 
     try {
         const response = await lastValueFrom(this.httpService.get(url, { params: { apiKey, type: 'day', date: dateStr } }));
         const json = response.data;
-        if (!json || !json.chartData || !json.chartData.data) return;
 
+        if (!json || !json.chartData || !json.chartData.data) { return; }
+
+        // 2. Calcular energía acumulada total del día
         let sumPowerKw = 0;
         json.chartData.data.forEach((point: any) => {
             const val = point[1]; 
@@ -205,13 +214,28 @@ export class ReadingService {
         });
 
         const totalEnergyKwh = sumPowerKw / 12;
-        await this.readingRepository.query(`DELETE FROM readings WHERE sensor_id = $1 AND DATE(reading_timestamp) = $2::DATE`, [mainSensorId, dateStr]);
+
+        this.logger.log(`🔋 Planta Total (${currentHourStr}:00): ${totalEnergyKwh.toFixed(2)} kWh`);
+
+        // 3. 🚨 CORRECCIÓN CRÍTICA 🚨
+        // Antes borrábamos por DATE (todo el día). Ahora borramos por HORA.
+        // Así conservamos los datos de las 8am, 9am, 10am...
+        await this.readingRepository.query(
+            `DELETE FROM readings 
+             WHERE sensor_id = $1 
+             AND to_char(reading_timestamp, 'YYYY-MM-DD HH24') = $2`, 
+            [mainSensorId, currentHourStr]
+        );
+
+        // 4. Guardar el nuevo punto
         await this.readingRepository.save({
             sensor_id: mainSensorId,
             value: parseFloat(totalEnergyKwh.toFixed(2)),
-            reading_timestamp: ecuadorTime 
+            reading_timestamp: nowEcuador // Guardamos con hora exacta
         });
-        this.logger.log('✅ Datos solares guardados.');
+        
+        this.logger.log('✅ Datos solares guardados (Punto horario añadido).');
+
     } catch (error: any) {
         this.logger.error(`❌ Error API VCOM: ${error.message}`);
     }
