@@ -262,18 +262,52 @@ export class ReadingService {
       series: Array.from(seriesMap.values())
     };
   }
-
+  
   async getSolarCardsSummary() {
     const PRECIO_KWH = 0.12;
-    const queryToday = `SELECT COALESCE(SUM(max_val), 0) as total_kwh FROM (SELECT MAX(value) as max_val FROM readings WHERE sensor_id = ANY($1) AND DATE(reading_timestamp) = (NOW() AT TIME ZONE 'America/Guayaquil')::DATE GROUP BY sensor_id) t;`;
-    const rawToday = await this.readingRepository.query(queryToday, [this.INVERTER_DB_IDS]);
-    const resToday = this.fixTimezone(rawToday);
+
+    const queryToday = `
+      SELECT COALESCE(SUM(max_val), 0) as total_kwh
+      FROM (
+          SELECT MAX(value) as max_val
+          FROM readings
+          WHERE sensor_id = ANY($1)
+          AND DATE(reading_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil') = (NOW() AT TIME ZONE 'America/Guayaquil')::DATE
+          GROUP BY sensor_id
+      ) t;
+    `;
+
+    const queryMonth = `
+      SELECT COALESCE(SUM(daily_max), 0) as total_kwh
+      FROM (
+          SELECT MAX(value) as daily_max
+          FROM readings
+          WHERE sensor_id = ANY($1)
+          AND to_char(reading_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil', 'YYYY-MM') = to_char(NOW() AT TIME ZONE 'America/Guayaquil', 'YYYY-MM')
+          GROUP BY sensor_id, DATE(reading_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil')
+      ) t;
+    `;
+
+    const [resToday, resMonth] = await Promise.all([
+      this.readingRepository.query(queryToday, [this.INVERTER_DB_IDS]),
+      this.readingRepository.query(queryMonth, [this.INVERTER_DB_IDS])
+    ]);
+
     const todayKwh = parseFloat(resToday[0].total_kwh);
+    const monthKwh = parseFloat(resMonth[0].total_kwh);
 
     return {
       success: true,
+      date: new Date().toLocaleDateString('es-EC', { timeZone: 'America/Guayaquil' }),
       cards: {
-        today: { energy_kwh: parseFloat(todayKwh.toFixed(2)), money_saved: parseFloat((todayKwh * PRECIO_KWH).toFixed(2)) }
+        today: {
+          energy_kwh: parseFloat(todayKwh.toFixed(2)),
+          money_saved: parseFloat((todayKwh * PRECIO_KWH).toFixed(2))
+        },
+        month: {
+          energy_kwh: parseFloat(monthKwh.toFixed(2)),
+          money_saved: parseFloat((monthKwh * PRECIO_KWH).toFixed(2))
+        }
       }
     };
   }
