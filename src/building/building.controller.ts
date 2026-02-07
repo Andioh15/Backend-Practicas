@@ -11,6 +11,11 @@ export class BuildingController {
     return this.buildingService.findAll();
   }
 
+  @Get('block/:id_block')
+  findByBlock(@Body('id_block') id_block: number): Promise<Buildings[]> {
+    return this.buildingService.findByBlock(id_block);
+  }
+
   @Post()
   create(@Body() building: Buildings): Promise<Buildings> {
     return this.buildingService.create(building);

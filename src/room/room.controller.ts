@@ -11,6 +11,11 @@ export class RoomController {
     return this.roomService.findAll();
   }
 
+  @Get('building/:id_building')
+  findByBuilding(@Body('id_building') id_building: number): Promise<Rooms[]> {
+    return this.roomService.findByBuilding(id_building);
+  }
+
   @Post()
   create(@Body() room: Rooms): Promise<Rooms> {
     return this.roomService.create(room);

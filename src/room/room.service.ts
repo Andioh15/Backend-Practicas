@@ -14,6 +14,10 @@ export class RoomService {
     return this.roomRepository.find();
   }
 
+  findByBuilding(id_building: number): Promise<Rooms[]> {
+    return this.roomRepository.find({ where: { building_id: id_building } });
+  }
+
   create(room: Rooms): Promise<Rooms> {
     return this.roomRepository.save(room);
   }

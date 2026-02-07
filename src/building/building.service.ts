@@ -14,6 +14,10 @@ export class BuildingService {
     return this.buildingRepository.find();
   }
 
+  findByBlock(id_block: number): Promise<Buildings[]> {
+    return this.buildingRepository.find({ where: { block_id: id_block } });
+  }
+
   create(building: Buildings): Promise<Buildings> {
     return this.buildingRepository.save(building);
   }
