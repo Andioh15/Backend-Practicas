@@ -62,7 +62,7 @@ export class ReadingService {
       // El sistema está leyendo '00:00' (BD) como '19:00' (JS). 
       // Sumamos 5 horas (en milisegundos) para volver a '00:00'.
       const timeMs = dateObj.getTime();
-      const fixedDate = new Date(timeMs + 0/*(5 * 60 * 60 * 1000)*/);
+      const fixedDate = new Date(timeMs - (5 * 60 * 60 * 1000));
 
       // 4. Extracción de los componentes de la fecha YA CORREGIDA
       // Usamos UTC methods para obtener el valor literal del objeto corregido
@@ -262,7 +262,7 @@ export class ReadingService {
       series: Array.from(seriesMap.values())
     };
   }
-  
+
   async getSolarCardsSummary() {
     const PRECIO_KWH = 0.12;
 
@@ -308,6 +308,28 @@ export class ReadingService {
           energy_kwh: parseFloat(monthKwh.toFixed(2)),
           money_saved: parseFloat((monthKwh * PRECIO_KWH).toFixed(2))
         }
+      }
+    };
+  }
+  async getSolarEcoImpact() {
+    const mainSensorId = this.INVERTER_DB_IDS[0]; // Sensor ID 4
+
+    // Llamamos a la nueva función SQL
+    const result = await this.readingRepository.query(
+      'SELECT * FROM get_solar_lifetime_impact($1)', 
+      [mainSensorId]
+    );
+
+    const data = result[0];
+
+    return {
+      success: true,
+      date: new Date().toLocaleDateString('es-EC', { timeZone: 'America/Guayaquil' }),
+      lifetime_data: {
+        energy_kwh: parseFloat(data.total_energy_kwh),
+        money_saved: parseFloat(data.total_money_saved),
+        co2_kg: parseFloat(data.total_co2_kg),
+        trees_planted: parseInt(data.total_trees, 10)
       }
     };
   }

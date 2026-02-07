@@ -157,4 +157,11 @@ export class ReadingController {
     
     return this.readingService.getHistoryMetrics(type, days, blockId, buildingId, roomId);
   }
+
+  // 5. NUEVO ENDPOINT: Impacto Ecológico Total
+  // URL: http://localhost:8080/reading/solar/impact
+  @Get('solar/impact')
+  getSolarImpact() {
+    return this.readingService.getSolarEcoImpact();
+  }
 }
