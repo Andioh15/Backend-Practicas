@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Res } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { Response } from 'express';
 import { ReadingService } from './reading.service';
+import { ReportsService } from '../reports/reports.service';
 import { Readings } from '../entities/readings.entity';
 import { CreateReadingDto } from '../reports/dtos/create-reading.dto';
+import { ExportReadingsDto } from '../reports/dtos/export-readings.dto';
 
 @Controller('reading')
 export class ReadingController {
@@ -12,7 +15,11 @@ export class ReadingController {
   // 10 minutos en milisegundos (Anti-spam para MQTT)
   private readonly SAVE_INTERVAL = 10 * 60 * 1000;
 
-  constructor(private readonly readingService: ReadingService) {}
+  constructor(
+    private readonly readingService: ReadingService,
+    // Inyectamos ReportsService para usar la generación de CSV
+    private readonly reportsService: ReportsService,
+  ) {}
 
   // ==========================================
   // 📡 MQTT (Desde el ESP32) - LÓGICA INTACTA
@@ -51,7 +58,6 @@ export class ReadingController {
   // ==========================================
 
   // 1. FORZAR SINCRONIZACIÓN (Botón de pánico)
-  // Llama a la API oficial y guarda el total en el Sensor 4
   @Get('solar/sync-test')
   async forceSolarSync() {
     await this.readingService.syncSolarData();
@@ -59,7 +65,6 @@ export class ReadingController {
   }
 
   // 2. DATOS PARA EL GRÁFICO (Curva Solar)
-  // Lee de tu Base de Datos local (Sensor 4)
   @Get('solar/detail')
   getSolarDetail() {
     return this.readingService.getSolarDetailLocal();
@@ -69,6 +74,12 @@ export class ReadingController {
   @Get('solar/cards')
   getSolarCards() {
     return this.readingService.getSolarCardsSummary();
+  }
+
+  // 4. NUEVO ENDPOINT: Impacto Ecológico Total
+  @Get('solar/impact')
+  getSolarImpact() {
+    return this.readingService.getSolarEcoImpact();
   }
 
   // ==========================================
@@ -144,7 +155,7 @@ export class ReadingController {
     return this.readingService.create(dto);
   }
 
-  // URL: /reading/metrics/history?type=Temperature&days=7&blockId=1
+  // Historial para Gráficos
   @Get('metrics/history')
   async getMetricsHistory(
     @Query('type') type: string,
@@ -158,10 +169,19 @@ export class ReadingController {
     return this.readingService.getHistoryMetrics(type, days, blockId, buildingId, roomId);
   }
 
-  // 5. NUEVO ENDPOINT: Impacto Ecológico Total
-  // URL: http://localhost:8080/reading/solar/impact
-  @Get('solar/impact')
-  getSolarImpact() {
-    return this.readingService.getSolarEcoImpact();
+  // ==========================================
+  // 📥 EXPORTAR CSV (CORREGIDO)
+  // ==========================================
+  @Get('export-csv')
+  async exportCsv(@Query() query: ExportReadingsDto, @Res() res: any) { // 👈 Usamos 'any' para evitar conflictos de tipo
+    // 1. Generar el CSV usando el servicio de REPORTES
+    const csvData = await this.readingService.generateCsvReport(query);
+
+    // 2. Configurar headers (Usamos .header en lugar de .setHeader para máxima compatibilidad)
+    res.header('Content-Type', 'text/csv');
+    res.header('Content-Disposition', `attachment; filename=reporte_${query.startDate}_${query.endDate}.csv`);
+    
+    // 3. Enviar respuesta
+    res.send(csvData);
   }
 }

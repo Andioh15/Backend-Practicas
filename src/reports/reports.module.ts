@@ -8,5 +8,6 @@ import { Readings } from 'src/entities/readings.entity';
   imports: [TypeOrmModule.forFeature([Readings])],
   controllers: [ReportsController],
   providers: [ReportsService],
+  exports: [ReportsService],
 })
 export class ReportsModule {}

@@ -6,14 +6,17 @@ import { Readings } from '../entities/readings.entity';
 import { Sensors } from '../entities/sensors.entity'; 
 import { ReadingService } from './reading.service';
 import { ReadingController } from './reading.controller';
+import { ReportsModule } from 'src/reports/reports.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Readings, Sensors]),
     HttpModule,   
     ConfigModule, 
+    ReportsModule,
   ],
   controllers: [ReadingController],
   providers: [ReadingService],
+  exports: [ReadingService]
 })
 export class ReadingModule {}
