@@ -184,4 +184,9 @@ export class ReadingController {
     // 3. Enviar respuesta
     res.send(csvData);
   }
+
+  @Get('summary')
+  async getSummary() {
+    return this.readingService.getSummary();
+  }
 }

@@ -349,4 +349,22 @@ export class ReadingService {
     // Unimos encabezado + filas
     return [headers.join(','), ...rows].join('\n');
   }
+
+  // ==========================================================
+  // 📊 RESUMEN PARA EL CHATBOT (N8N)
+  // ==========================================================
+  async getSummary() {
+    // Llamamos a la función SQL que acabamos de crear
+    const data = await this.readingRepository.query('SELECT * FROM get_monitor_status()');
+    
+    // Extraemos la primera fila (siempre devuelve 1 fila)
+    const result = data[0] || {};
+
+    return {
+      // Formateamos los números para que se vean bonitos en WhatsApp
+      avg_co2: Number(result.last_co2 || 0).toFixed(0), // Sin decimales
+      avg_temp: Number(result.last_temp || 0).toFixed(1), // 1 decimal
+      avg_hum: Number(result.last_hum || 0).toFixed(0)   // Sin decimales
+    };
+  }
 }
