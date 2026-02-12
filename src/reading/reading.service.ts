@@ -375,7 +375,46 @@ export class ReadingService {
   
 
 
-  
+  // ==========================================================
+  // 🤖 INTEGRACIÓN CON GEMINI
+  // ==========================================================
+  async askGemini(prompt: string) {
+    try {
+      // 1. Obtener la API Key de las variables de entorno
+      const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+      if (!apiKey) {
+        throw new Error('La API Key de Gemini no está configurada.');
+      }
+
+      // 2. Inicializar el modelo
+      const genAI = new GoogleGenerativeAI(apiKey);
+      // Usamos flash por ser rápido y económico, ideal para APIs
+      // Prueba con el nombre base, que es el más compatible
+      // Sustituye por este en tu reading.service.ts
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash"
+      }, {
+        apiVersion: 'v1' // <--- Forzamos la versión estable en lugar de la beta
+      });
+
+      // 3. Generar contenido
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+
+      return {
+        success: true,
+        answer: response.text()
+      };
+
+    } catch (error) {
+      this.logger.error(`❌ Error consultando Gemini: ${error.message}`);
+      return {
+        success: false,
+        error: 'No pude conectar con la IA en este momento.'
+      };
+    }
+  }
+
 
 
 }
