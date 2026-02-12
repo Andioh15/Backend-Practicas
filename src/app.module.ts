@@ -14,6 +14,7 @@ import { SensorModule } from './sensor/sensor.module';
 import { ReadingModule } from './reading/reading.module';
 import { ReportsModule } from './reports/reports.module';
 import { report } from 'process';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -42,7 +43,8 @@ import { report } from 'process';
     RoomModule,
     SensorModule,
     ReadingModule,
-    ReportsModule
+    ReportsModule,
+    AiModule
   ],
   controllers: [AppController],
   providers: [AppService],
