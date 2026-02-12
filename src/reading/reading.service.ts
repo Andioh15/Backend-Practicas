@@ -18,7 +18,7 @@ export class ReadingService {
   private readonly logger = new Logger(ReadingService.name);
   private readonly INVERTER_DB_IDS = [4];
 
-  private readonly N8N_WEBHOOK_URL = "https://andioh.app.n8n.cloud/webhook-test/459c5db4-1809-438d-9e46-4205bc50bcd8";
+  private readonly N8N_WEBHOOK_URL = "http://34.135.110.156:5678/webhook/wbFinal";
 
   constructor(
     @InjectRepository(Readings)
