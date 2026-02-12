@@ -38,7 +38,7 @@ REGLAS IMPORTANTES:
     }
 
     // =========================================================
-    // 🔥 Limpieza de tipos
+    //  Limpieza de tipos
     // =========================================================
     private sanitizeToolResponse(data: any) {
 
@@ -53,7 +53,7 @@ REGLAS IMPORTANTES:
     }
 
     // =========================================================
-    // 🚀 CHAT PRINCIPAL
+    //  CHAT PRINCIPAL
     // =========================================================
     async chat(message: string) {
 
@@ -85,7 +85,7 @@ REGLAS IMPORTANTES:
         }
 
         // STEP 2 TOOL
-        console.log("\n🧰 TOOL SOLICITADO:", call.name);
+        console.log("\n TOOL SOLICITADO:", call.name);
         console.log("ARGS:", call.args);
 
         let data: any;
@@ -103,17 +103,15 @@ REGLAS IMPORTANTES:
                 data = {};
         }
 
-        console.log("\n📦 DATA ORIGINAL TOOL:");
+        console.log("\n DATA ORIGINAL TOOL:");
         console.log(data);
 
         const cleanData = this.sanitizeToolResponse(data);
 
-        console.log("\n🧼 DATA LIMPIA:");
+        console.log("\n DATA LIMPIA:");
         console.log(cleanData);
 
-        // ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
-        // RESPUESTA CORRECTA A GEMINI
-        // ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+       
 
         const final = await this.model.generateContent({
 

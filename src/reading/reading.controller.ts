@@ -22,7 +22,7 @@ export class ReadingController {
   ) {}
 
   // ==========================================
-  // 📡 MQTT (Desde el ESP32) - LÓGICA INTACTA
+  //  MQTT (Desde el ESP32) - LÓGICA INTACTA
   // ==========================================
   @MessagePattern('sensores/data') 
   async handleSensorData(@Payload() data: any) {
@@ -47,21 +47,21 @@ export class ReadingController {
       return; 
     }
 
-    console.log(`✅ [MQTT] Guardando dato del Sensor ${payload.sensor_id}: ${payload.value}`);
+    console.log(` [MQTT] Guardando dato del Sensor ${payload.sensor_id}: ${payload.value}`);
     this.lastSavedTimes.set(payload.sensor_id, now);
     
     return this.readingService.create(payload);
   }
 
   // ==========================================
-  // ☀️ ZONA SOLAR (NUEVOS ENDPOINTS)
+  //  ZONA SOLAR (NUEVOS ENDPOINTS)
   // ==========================================
 
   // 1. FORZAR SINCRONIZACIÓN (Botón de pánico)
   @Get('solar/sync-test')
   async forceSolarSync() {
     await this.readingService.syncSolarData();
-    return { message: '✅ Sincronización manual ejecutada. Revisa la consola del servidor.' };
+    return { message: ' Sincronización manual ejecutada. Revisa la consola del servidor.' };
   }
 
   // 2. DATOS PARA EL GRÁFICO (Curva Solar)
@@ -83,7 +83,7 @@ export class ReadingController {
   }
 
   // ==========================================
-  // 🌐 HTTP - DASHBOARD GENERAL
+  //  HTTP - DASHBOARD GENERAL
   // ==========================================
 
   @Get('summary-db')
@@ -102,7 +102,7 @@ export class ReadingController {
   }
 
   // ==========================================
-  // 🌐 HTTP - TABLAS Y PAGINACIÓN
+  //  HTTP - TABLAS Y PAGINACIÓN
   // ==========================================
 
   // Tabla Principal
@@ -148,7 +148,7 @@ export class ReadingController {
   }
 
   // ==========================================
-  // 🛠️ CREACIÓN MANUAL (HTTP POST)
+  //  CREACIÓN MANUAL (HTTP POST)
   // ==========================================
   @Post()
   create(@Body() dto: CreateReadingDto): Promise<Readings> {
@@ -170,10 +170,10 @@ export class ReadingController {
   }
 
   // ==========================================
-  // 📥 EXPORTAR CSV (CORREGIDO)
+  //  EXPORTAR CSV (CORREGIDO)
   // ==========================================
   @Get('export-csv')
-  async exportCsv(@Query() query: ExportReadingsDto, @Res() res: any) { // 👈 Usamos 'any' para evitar conflictos de tipo
+  async exportCsv(@Query() query: ExportReadingsDto, @Res() res: any) { //  Usamos 'any' para evitar conflictos de tipo
     // 1. Generar el CSV usando el servicio de REPORTES
     const csvData = await this.readingService.generateCsvReport(query);
 
@@ -191,7 +191,7 @@ export class ReadingController {
   }
 
   // ==========================================
-  // 🧠 Endpoint para preguntar a Gemini
+  //  Endpoint para preguntar a Gemini
   // ==========================================
   @Post('ask-ai')
   async chat(@Body() body: any) {

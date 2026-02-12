@@ -74,7 +74,7 @@ export class ReadingService {
   }
 
   // ==========================================================
-  // 1. CREAR LECTURA + 🚨 ALERTA N8N
+  // 1. CREAR LECTURA +  ALERTA N8N
   // ==========================================================
   async create(dto: CreateReadingDto | any): Promise<Readings> {
     const timestampToSave = this.getRoundedDate(10);
@@ -94,14 +94,14 @@ export class ReadingService {
 
     const savedData = await this.readingRepository.save(newReading);
 
-    // 3. 🚨 VERIFICAR ALERTAS (No usamos await para no bloquear)
+    // 3.  VERIFICAR ALERTAS (No usamos await para no bloquear)
     this.checkAlerts(dto.sensor_id, dto.value);
 
     return savedData;
   }
 
   // ==========================================================
-  // 🚨 LÓGICA DE ENVÍO A N8N
+  //  LÓGICA DE ENVÍO A N8N
   // ==========================================================
   private async checkAlerts(sensorId: number, value: number) {
     let alertMessage = '';
@@ -207,7 +207,7 @@ export class ReadingService {
   }
 
   // ==========================================================
-  // ⚡ AQUI ESTABA EL ERROR: ARREGLADO EL ARRAY [0]
+  //  AQUI ESTABA EL ERROR: ARREGLADO EL ARRAY [0]
   // ==========================================================
   async getSolarCardsSummary() {
     const PRECIO = 0.12;
@@ -318,7 +318,7 @@ export class ReadingService {
   async generateCsvReport(filters: ExportReadingsDto): Promise<string> {
     const { startDate, endDate, type, blockId, buildingId, roomId } = filters;
 
-    // 1. Llamada a la Función SQL Rápida ⚡
+    // 1. Llamada a la Función SQL Rápida 
     // Pasamos NULL si el dato no existe para que el SQL sepa ignorar ese filtro
     const rawData = await this.readingRepository.query(
       'SELECT * FROM get_readings_export($1, $2, $3, $4, $5, $6)',
@@ -376,7 +376,7 @@ export class ReadingService {
 
 
   // ==========================================================
-  // 🤖 INTEGRACIÓN CON GEMINI
+  //  INTEGRACIÓN CON GEMINI
   // ==========================================================
   async askGemini(prompt: string) {
     try {
@@ -407,7 +407,7 @@ export class ReadingService {
       };
 
     } catch (error) {
-      this.logger.error(`❌ Error consultando Gemini: ${error.message}`);
+      this.logger.error(` Error consultando Gemini: ${error.message}`);
       return {
         success: false,
         error: 'No pude conectar con la IA en este momento.'
