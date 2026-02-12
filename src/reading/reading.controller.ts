@@ -194,17 +194,39 @@ export class ReadingController {
   // 🧠 Endpoint para preguntar a Gemini
   // ==========================================
   @Post('ask-ai')
-  async askGeminiEndpoint(@Body() body: { prompt: string }) {
-    // Validamos que venga el prompt
-    if (!body || !body.prompt) {
-      return { error: 'Por favor envía un campo "prompt" con tu pregunta.' };
-    }
-    
-    // Llamamos al servicio
-    return await this.readingService.askGemini(body.prompt);
+  async chat(@Body() body: any) {
+  // 1. Obtener el último mensaje del usuario
+  const lastMessage = body?.messages?.at(-1);
+  const userMessage =
+  lastMessage?.content ||
+  lastMessage?.parts?.find(p => p.type === "text")?.text;
+
+
+  if (!userMessage) {
+    return {
+      messages: [
+        {
+          role: "assistant",
+          content: "No recibí ningún mensaje."
+        }
+      ]
+    };
   }
 
+  // 2. Llamar a Gemini
+  const result = await this.readingService.askGemini(userMessage);
 
-  
+  if (!result.success) {
+    return {
+      role: "assistant",
+      parts: [{ type: "text", text: "No pude conectar con la IA en este momento." }]
+    };
+  }
+
+  return {
+    role: "assistant",
+    parts: [{ type: "text", text: result.answer }]
+  };
+}
 
 }

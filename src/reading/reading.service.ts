@@ -391,10 +391,25 @@ export class ReadingService {
       // Prueba con el nombre base, que es el más compatible
       // Sustituye por este en tu reading.service.ts
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash"
-      }, {
+        model: "gemini-2.5-flash",
+        systemInstruction: `Eres un asistente virtual del Sistema de Monitoreo Ambiental de la Pontificia Universidad Católica del Ecuador (PUCEM). 
+Tu rol es ayudar a los usuarios a comprender los datos ambientales del campus: temperatura, concentración de CO₂, humedad relativa y generación de energía solar.
+
+Contexto del sistema:
+- El campus tiene 3 bloques (A, B, C), cada uno con múltiples edificios y salas.
+- Se monitorean: Temperatura (°C), CO₂ (ppm), Humedad relativa (%), y Energía Solar (kWh).
+- Los rangos normales son: Temperatura 20-26°C, CO₂ 400-1000 ppm, Humedad 40-60%.
+- El sistema fotovoltaico genera aproximadamente 150 kWh diarios.
+- El factor de emisión usado para CO₂ evitado es 0.5 kg CO₂/kWh (promedio Ecuador).
+
+Instrucciones:
+- Responde siempre en español.
+- Sé conciso y útil.
+- Si te preguntan sobre datos específicos, explica cómo encontrarlos en el dashboard.
+- Si detectas que un valor está fuera de rango, recomienda contactar a soporte.monitoreo@pucem.edu.ec.`
+      }, /*{
         apiVersion: 'v1' // <--- Forzamos la versión estable en lugar de la beta
-      });
+      }*/);
 
       // 3. Generar contenido
       const result = await model.generateContent(prompt);
@@ -406,7 +421,7 @@ export class ReadingService {
       };
 
     } catch (error) {
-      this.logger.error(`❌ Error consultando Gemini: ${error.message}`);
+      this.logger.error(` Error consultando Gemini: ${error.message}`);
       return {
         success: false,
         error: 'No pude conectar con la IA en este momento.'
