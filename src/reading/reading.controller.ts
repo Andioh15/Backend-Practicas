@@ -189,4 +189,22 @@ export class ReadingController {
   async getSummary() {
     return this.readingService.getSummary();
   }
+
+  // ==========================================
+  // 🧠 Endpoint para preguntar a Gemini
+  // ==========================================
+  @Post('ask-ai')
+  async askGeminiEndpoint(@Body() body: { prompt: string }) {
+    // Validamos que venga el prompt
+    if (!body || !body.prompt) {
+      return { error: 'Por favor envía un campo "prompt" con tu pregunta.' };
+    }
+    
+    // Llamamos al servicio
+    return await this.readingService.askGemini(body.prompt);
+  }
+
+
+  
+
 }
