@@ -21,10 +21,11 @@ import { report } from 'process';
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.HOST,
-      username: process.env.USER,
-      password: process.env.PASSWORD,
-      database: process.env.DATABASE,
+      host: process.env.HOST_DB,
+      port: process.env.PORT_DB,
+      username: process.env.USER_DB,
+      password: process.env.PASSWORD_DB,
+      database: process.env.DATABASE_NAME,
       retryAttempts: 3,
       retryDelay: 3000,
       ssl: {
