@@ -18,9 +18,7 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.MQTT,
     options: {
-      url: process.env.MOSQUITTO_HOST,
-      port: parseInt(process.env.MOSQUITTO_PORT || '1883', 10),
-      protocol: 'mqtt',
+      url: `mqtt://${process.env.MOSQUITTO_HOST}:${process.env.MOSQUITTO_PORT}`, // Tu IP del broker
       // subscribeOptions: { qos: 1 }, // Opcional: configuración de calidad de servicio
     },
   });
