@@ -22,7 +22,7 @@ import { report } from 'process';
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.HOST_DB,
-      port: process.env.PORT_DB,
+      port: parseInt(process.env.PORT_DB || '5432', 10),
       username: process.env.USER_DB,
       password: process.env.PASSWORD_DB,
       database: process.env.DATABASE_NAME,
