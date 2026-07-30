@@ -18,7 +18,7 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.MQTT,
     options: {
-      url: 'mqtt://34.174.85.207:1883', // Tu IP del broker
+      url: process.env.MOSQUITTO_HOST, // Tu IP del broker
       // subscribeOptions: { qos: 1 }, // Opcional: configuración de calidad de servicio
     },
   });
@@ -35,7 +35,7 @@ async function bootstrap() {
 
   console.log(`---`);
   console.log(`🚀 API REST corriendo en: http://localhost:8080`);
-  console.log(`📡 Escuchando microservicio MQTT en: 34.174.85.207:1883`);
+  console.log(`📡 Escuchando microservicio MQTT en: ${process.env.MOSQUITTO_HOST}`);
   console.log(`---`);
 }
 bootstrap();
