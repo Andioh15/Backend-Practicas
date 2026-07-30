@@ -28,9 +28,7 @@ import { report } from 'process';
       database: process.env.DATABASE_NAME,
       retryAttempts: 3,
       retryDelay: 3000,
-      ssl: {
-    rejectUnauthorized: false, // Esto permite certificados autofirmados (común en desarrollo)
-  },
+      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   // O en algunas versiones antiguas simplemente:
   // ssl: true, 
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
