@@ -19,7 +19,8 @@ async function bootstrap() {
     transport: Transport.MQTT,
     options: {
       url: process.env.MOSQUITTO_HOST,
-      port: parseInt(process.env.MOSQUITTO_PORT || '1883', 10), // Tu IP del broker
+      port: parseInt(process.env.MOSQUITTO_PORT || '1883', 10),
+      protocol: 'mqtt',
       // subscribeOptions: { qos: 1 }, // Opcional: configuración de calidad de servicio
     },
   });
