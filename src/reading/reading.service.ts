@@ -9,6 +9,7 @@ import { Readings } from '../entities/readings.entity';
 import { Sensors } from '../entities/sensors.entity';
 import { CreateReadingDto } from '../reports/dtos/create-reading.dto';
 import { ExportReadingsDto } from '../reports/dtos/export-readings.dto';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
 
 @Injectable()
 export class ReadingService {
@@ -24,6 +25,7 @@ export class ReadingService {
 
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly whatsAppService: WhatsAppService,
     private dataSource: DataSource,
   ) {}
 
@@ -85,7 +87,9 @@ export class ReadingService {
       reading_timestamp: timestampToSave, 
     });
 
-    return await this.readingRepository.save(newReading);
+    const savedReading = await this.readingRepository.save(newReading);
+    void this.whatsAppService.notifyReadingCreated(savedReading);
+    return savedReading;
   }
 
   // ==========================================================

@@ -13,7 +13,7 @@ import { RoomModule } from './room/room.module';
 import { SensorModule } from './sensor/sensor.module';
 import { ReadingModule } from './reading/reading.module';
 import { ReportsModule } from './reports/reports.module';
-import { report } from 'process';
+import { WhatsAppModule } from './whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -41,7 +41,8 @@ import { report } from 'process';
     RoomModule,
     SensorModule,
     ReadingModule,
-    ReportsModule
+    ReportsModule,
+    WhatsAppModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -7,6 +7,7 @@ import { Sensors } from '../entities/sensors.entity';
 import { ReadingService } from './reading.service';
 import { ReadingController } from './reading.controller';
 import { ReportsModule } from 'src/reports/reports.module';
+import { WhatsAppModule } from '../whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ReportsModule } from 'src/reports/reports.module';
     HttpModule,   
     ConfigModule, 
     ReportsModule,
+    WhatsAppModule,
   ],
   controllers: [ReadingController],
   providers: [ReadingService],
