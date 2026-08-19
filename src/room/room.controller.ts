@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { RoomService } from './room.service';
 import { Rooms } from '../entities/rooms.entity';
 
@@ -12,7 +12,7 @@ export class RoomController {
   }
 
   @Get('building/:id_building')
-  findByBuilding(@Body('id_building') id_building: number): Promise<Rooms[]> {
+  findByBuilding(@Param('id_building') id_building: number): Promise<Rooms[]> {
     return this.roomService.findByBuilding(id_building);
   }
 
