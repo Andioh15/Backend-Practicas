@@ -142,6 +142,25 @@ export class ReadingService {
   // ==========================================================
   // METODOS DE CONSULTA Y REPORTES
   // ==========================================================
+
+  // 🏢 NUEVO: ESTADO DE AULAS EN TIEMPO REAL (Mapas Interactivos)
+  async getRealtimeRoomStatus(campusId?: number, blockId?: number, buildingId?: number) {
+    const query = 'SELECT * FROM get_realtime_room_status($1, $2, $3)';
+    const result = await this.readingRepository.query(query, [
+      campusId || null, 
+      blockId || null, 
+      buildingId || null
+    ]);
+
+    return {
+      success: true,
+      data: result.map((row: any) => ({
+        ...row,
+        is_in_use: row.is_in_use, 
+        alert_active: row.alert_active
+      }))
+    };
+  }
   
   async findAllPaginated(blockId?: number, buildingId?: number, roomId?: number, limit = 25, offset = 0) {
     const data = await this.readingRepository.query('SELECT * FROM get_last_readings($1, $2, $3, $4, $5)', [blockId, buildingId, roomId, limit, offset]);
@@ -159,15 +178,11 @@ export class ReadingService {
     return { success: true, type, data: fixedData.map(row => ({ date: row.chart_date, value: parseFloat(row.chart_value), extra: parseFloat(row.chart_extra) })) };
   }
 
-  // ==========================================================
-  // ⚡ AQUI ESTABA EL ERROR: ARREGLADO EL ARRAY [0]
-  // ==========================================================
   async getSolarCardsSummary() {
     const PRECIO = 0.12;
     const qToday = `SELECT COALESCE(MAX(value), 0) as val FROM readings WHERE sensor_id = $1 AND reading_timestamp::date = CURRENT_DATE`;
     const qMonth = `SELECT SUM(daily_max) as val FROM (SELECT MAX(value) as daily_max FROM readings WHERE sensor_id = $1 AND to_char(reading_timestamp, 'YYYY-MM') = to_char(CURRENT_DATE, 'YYYY-MM') GROUP BY reading_timestamp::date) t`;
     
-    // CORRECCION: Usamos INVERTER_DB_IDS[0] para pasar el numero 4, no el array [4]
     const [resT, resM] = await Promise.all([
       this.readingRepository.query(qToday, [this.INVERTER_DB_IDS[0]]), 
       this.readingRepository.query(qMonth, [this.INVERTER_DB_IDS[0]])
@@ -186,7 +201,6 @@ export class ReadingService {
   }
 
   async getSolarEcoImpact() {
-    // CORRECCION: Aseguramos indice [0] aqui tambien
     const r = await this.readingRepository.query('SELECT * FROM get_solar_lifetime_impact($1)', [this.INVERTER_DB_IDS[0]]);
     return { 
       success: true, 
@@ -220,7 +234,6 @@ export class ReadingService {
   }
   
   async getSolarDetailLocal() {
-     // AQUI SI se usa ANY($1), asi que pasamos el array completo
      const q = `
        WITH hourly_data AS (
          SELECT sensor_id, value as accumulated, reading_timestamp as local_ts 
@@ -271,8 +284,6 @@ export class ReadingService {
   async generateCsvReport(filters: ExportReadingsDto): Promise<string> {
     const { startDate, endDate, type, blockId, buildingId, roomId } = filters;
 
-    // 1. Llamada a la Función SQL Rápida ⚡
-    // Pasamos NULL si el dato no existe para que el SQL sepa ignorar ese filtro
     const rawData = await this.readingRepository.query(
       'SELECT * FROM get_readings_export($1, $2, $3, $4, $5, $6)',
       [
@@ -285,24 +296,21 @@ export class ReadingService {
       ]
     );
 
-    // 2. Construcción del CSV (Ahora es súper rápido porque no hay lógica compleja)
     const headers = ['Fecha', 'Hora', 'Tipo Sensor', 'Valor', 'Unidad', 'Bloque', 'Edificio', 'Sala'];
     
-    // Mapeamos los resultados limpios que vienen de la BD
     const rows = rawData.map(row => {
       return [
         row.fecha,
         row.hora,
         row.tipo_sensor,
-        row.valor,       // Ya viene redondeado desde SQL
+        row.valor,       
         row.unidad,
-        `"${row.bloque}"`,   // Comillas por si hay espacios
+        `"${row.bloque}"`,   
         `"${row.edificio}"`,
         `"${row.sala}"`
       ].join(',');
     });
 
-    // Unimos encabezado + filas
     return [headers.join(','), ...rows].join('\n');
   }
 }

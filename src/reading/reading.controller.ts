@@ -54,6 +54,18 @@ export class ReadingController {
   }
 
   // ==========================================
+  // 🏫 MAPAS INTERACTIVOS
+  // ==========================================
+  @Get('room-status')
+  async getRoomStatus(
+    @Query('campusId') campusId?: number,
+    @Query('blockId') blockId?: number,
+    @Query('buildingId') buildingId?: number,
+  ) {
+    return this.readingService.getRealtimeRoomStatus(campusId, blockId, buildingId);
+  }
+
+  // ==========================================
   // ☀️ ZONA SOLAR (NUEVOS ENDPOINTS)
   // ==========================================
 
@@ -173,7 +185,7 @@ export class ReadingController {
   // 📥 EXPORTAR CSV (CORREGIDO)
   // ==========================================
   @Get('export-csv')
-  async exportCsv(@Query() query: ExportReadingsDto, @Res() res: any) { // 👈 Usamos 'any' para evitar conflictos de tipo
+  async exportCsv(@Query() query: ExportReadingsDto, @Res() res: any) { 
     // 1. Generar el CSV usando el servicio de REPORTES
     const csvData = await this.readingService.generateCsvReport(query);
 

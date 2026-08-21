@@ -14,6 +14,9 @@ import { SensorModule } from './sensor/sensor.module';
 import { ReadingModule } from './reading/reading.module';
 import { ReportsModule } from './reports/reports.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
+import { ProfessorModule } from './professor/professor.module';
+import { ScheduleModule as ClassScheduleModule } from './schedule/schedule.module';
+import { SubjectModule } from './subject/subject.module';
 
 @Module({
   imports: [
@@ -21,18 +24,16 @@ import { WhatsAppModule } from './whatsapp/whatsapp.module';
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.HOST_DB,
-      port: parseInt(process.env.PORT_DB || '5432', 10),
-      username: process.env.USER_DB,
-      password: process.env.PASSWORD_DB,
-      database: process.env.DATABASE_NAME,
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      username: process.env.DB_USER,
+      password: String(process.env.DB_PASSWORD),
+      database: process.env.DB_NAME ,
       retryAttempts: 3,
       retryDelay: 3000,
       ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  // O en algunas versiones antiguas simplemente:
-  // ssl: true, 
-    entities: [__dirname + '/**/*.entity{.ts,.js}'],
-    synchronize: true,
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: false,
     }),
     UsersModule,
     CampusModule,
@@ -42,11 +43,13 @@ import { WhatsAppModule } from './whatsapp/whatsapp.module';
     SensorModule,
     ReadingModule,
     ReportsModule,
+    ProfessorModule,
+    ClassScheduleModule,
+    ScheduleModule,
+    SubjectModule,
     WhatsAppModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
-
-
