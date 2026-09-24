@@ -17,6 +17,7 @@ import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { ProfessorModule } from './professor/professor.module';
 import { ScheduleModule as ClassScheduleModule } from './schedule/schedule.module';
 import { SubjectModule } from './subject/subject.module';
+import { BillsModule } from './bills/bills.module';
 
 @Module({
   imports: [
@@ -45,9 +46,10 @@ import { SubjectModule } from './subject/subject.module';
     ReportsModule,
     ProfessorModule,
     ClassScheduleModule,
-    ScheduleModule,
+    //ScheduleModule,
     SubjectModule,
     WhatsAppModule,
+    BillsModule
   ],
   controllers: [AppController],
   providers: [AppService],

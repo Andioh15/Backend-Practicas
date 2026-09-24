@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@fastify/multipart": "^10.1.2",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.1.12",
     "@nestjs/config": "^4.0.3",
@@ -35,6 +36,7 @@
     "dotenv": "^16.5.0",
     "eslint": "^8.57.1",
     "mqtt": "^5.14.1",
+    "pdf-extraction": "^1.0.2",
     "pg": "^8.16.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",

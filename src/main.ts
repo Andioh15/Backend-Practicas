@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
+import fastifyMultipart from '@fastify/multipart';
 
 async function bootstrap() {
   // 1. Crear la aplicación con Fastify
@@ -15,6 +16,8 @@ async function bootstrap() {
 
   // Habilitar CORS para que el frontend en Next.js pueda consultar tu API
   app.enableCors();
+
+  await app.register(fastifyMultipart);
 
   // 2. Configurar el microservicio MQTT condicionalmente (Interruptor)
   if (process.env.ENABLE_MQTT === 'true') {
