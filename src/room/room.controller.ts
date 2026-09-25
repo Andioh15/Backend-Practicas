@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Body, Delete, Get, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
 import { RoomService } from './room.service';
 import { Rooms } from '../entities/rooms.entity';
 
@@ -19,5 +19,15 @@ export class RoomController {
   @Post()
   create(@Body() room: Rooms): Promise<Rooms> {
     return this.roomService.create(room);
+  }
+
+  @Put(':id')
+  update(@Param('id', ParseIntPipe) id: number, @Body() data: Partial<Rooms>): Promise<Rooms> {
+    return this.roomService.update(id, data);
+  }
+
+  @Delete(':id')
+  delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return this.roomService.delete(id);
   }
 }

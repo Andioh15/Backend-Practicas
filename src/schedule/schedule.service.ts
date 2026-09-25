@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { rethrowDbError } from '../common/db-errors';
 import { Schedule } from '../entities/schedules.entity';
 
 @Injectable()
@@ -27,17 +28,29 @@ export class ScheduleService {
   }
 
   async create(data: Partial<Schedule>) {
-    return await this.scheduleRepo.save(this.scheduleRepo.create(data));
+    try {
+      return await this.scheduleRepo.save(this.scheduleRepo.create(data));
+    } catch (error) {
+      rethrowDbError(error, 'el horario');
+    }
   }
 
   async update(id: number, data: Partial<Schedule>) {
     await this.findOne(id);
-    await this.scheduleRepo.update(id, data);
+    try {
+      await this.scheduleRepo.update(id, data);
+    } catch (error) {
+      rethrowDbError(error, 'el horario');
+    }
     return this.findOne(id);
   }
 
   async delete(id: number) {
     await this.findOne(id);
-    return await this.scheduleRepo.delete(id);
+    try {
+      return await this.scheduleRepo.delete(id);
+    } catch (error) {
+      rethrowDbError(error, 'el horario');
+    }
   }
 }

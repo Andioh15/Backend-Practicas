@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { rethrowDbError } from '../common/db-errors';
 import { Subject } from '../entities/subjects.entity';
 
 @Injectable()
@@ -19,17 +20,29 @@ export class SubjectService {
   }
 
   async create(data: Partial<Subject>) {
-    return await this.subjectRepo.save(this.subjectRepo.create(data));
+    try {
+      return await this.subjectRepo.save(this.subjectRepo.create(data));
+    } catch (error) {
+      rethrowDbError(error, 'la materia');
+    }
   }
 
   async update(id: number, data: Partial<Subject>) {
     await this.findOne(id);
-    await this.subjectRepo.update(id, data);
+    try {
+      await this.subjectRepo.update(id, data);
+    } catch (error) {
+      rethrowDbError(error, 'la materia');
+    }
     return this.findOne(id);
   }
 
   async delete(id: number) {
     await this.findOne(id);
-    return await this.subjectRepo.delete(id);
+    try {
+      return await this.subjectRepo.delete(id);
+    } catch (error) {
+      rethrowDbError(error, 'la materia');
+    }
   }
 }
