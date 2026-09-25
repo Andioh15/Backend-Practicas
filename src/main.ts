@@ -15,7 +15,8 @@ async function bootstrap() {
   );
 
   // Habilitar CORS para que el frontend en Next.js pueda consultar tu API
-  app.enableCors();
+  // Fastify solo permite GET/HEAD/POST por defecto; DELETE/PUT/PATCH se necesitan desde el panel admin
+  app.enableCors({ methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'] });
 
   await app.register(fastifyMultipart);
 
